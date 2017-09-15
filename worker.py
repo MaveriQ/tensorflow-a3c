@@ -51,7 +51,7 @@ class Worker:
         self.frame_stack = deque(maxlen=N_FRAMES_STACKED)
         self.reset_env()
 
-        self.t_max = 10000
+        self.t_max = 5
         self.steps = 0
         self.episode_rewards = []
         self.render = False
