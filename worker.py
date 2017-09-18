@@ -174,17 +174,10 @@ class Worker:
         #  So that we miss out the last state.)
         for j in reversed(range(i)):
             s = states[j]
-            s = 5
             r = rewards[j] + G * r
-            r = 0
             feed_dict = {self.network.s: [[s]],
-                         self.network.a: [actions[j]], 
+                         self.network.a: [actions[j]],
                          self.network.r: [r]}
-
-            print(s)
-            print(self.sess.run([self.network.graph_v], feed_dict)[0])
-            print(self.sess.run([self.network.advantage], feed_dict)[0])
-            print()
 
             self.sess.run([self.update_policy_gradients,
                       self.update_value_gradients],
