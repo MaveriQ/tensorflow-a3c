@@ -9,6 +9,14 @@ import time
 from worker import Worker
 from network import create_network
 
+from gym.envs.registration import register
+register(
+    id='FrozenLakeNotSlippery-v0',
+    entry_point='gym.envs.toy_text:FrozenLakeEnv',
+    kwargs={'map_name' : '4x4', 'is_slippery': False},
+    max_episode_steps=100,
+    reward_threshold=0.78, # optimum = .8196
+)
 
 def worker(i, ckpt_freq, load_ckpt_file, render):
     """
@@ -30,7 +38,7 @@ def worker(i, ckpt_freq, load_ckpt_file, render):
     with tf.device("/job:worker/task:0"):
         create_network('global')
     with tf.device("/job:worker/task:%d" % i):
-        w = Worker(sess, i, 'PongNoFrameskip-v4', summary_writer)
+        w = Worker(sess, i, 'FrozenLakeNotSlippery-v0', summary_writer)
         if render:
             w.render = True
 

@@ -2,46 +2,22 @@ from collections import namedtuple
 import tensorflow as tf
 from utils import entropy
 
-N_ACTIONS = 3
-BETA = 0.01
+N_ACTIONS = 4
+BETA = 0.0
 
 Network = namedtuple('Network',
-                     's a r a_softmax graph_v policy_loss value_loss')
+                     's a r a_softmax graph_v policy_loss value_loss advantage')
 
 
 def create_network(scope):
     with tf.variable_scope(scope):
-        graph_s = tf.placeholder(tf.float32, [None, 80, 80, 4])
+        graph_s = tf.placeholder(tf.float32, [None, 1])
         graph_action = tf.placeholder(tf.int64, [None])
         graph_r = tf.placeholder(tf.float32, [None])
 
-        x = tf.layers.conv2d(
-                inputs=graph_s,
-                filters=32,
-                kernel_size=8,
-                strides=4,
-                activation=tf.nn.relu)
-
-        x = tf.layers.conv2d(
-                inputs=x,
-                filters=64,
-                kernel_size=4,
-                strides=2,
-                activation=tf.nn.relu)
-
-        x = tf.layers.conv2d(
-                inputs=x,
-                filters=64,
-                kernel_size=3,
-                strides=1,
-                activation=tf.nn.relu)
-
-        w, h, f = x.get_shape()[1:]
-        x = tf.reshape(x, [-1, int(w * h * f)])
-
         x = tf.layers.dense(
-                inputs=x,
-                units=512,
+                inputs=graph_s,
+                units=100,
                 activation=tf.nn.relu)
 
         a_logits = tf.layers.dense(
@@ -59,7 +35,7 @@ def create_network(scope):
         # Convert to just (?)
         graph_v = graph_v[:, 0]
 
-        advantage = graph_r - graph_v
+        advantage = tf.subtract(graph_r, graph_v, name='advantage')
 
         p = 0
         for i in range(N_ACTIONS):
@@ -83,7 +59,7 @@ def create_network(scope):
             policy_loss -= tf.reduce_sum(BETA * entropy(a_logits))
 
             value_loss = advantage ** 2
-            value_loss = tf.reduce_sum(value_loss)
+            value_loss = tf.reduce_sum(value_loss, name='value_loss')
 
         network = Network(
             s=graph_s,
@@ -92,6 +68,7 @@ def create_network(scope):
             a_softmax=a_softmax,
             graph_v=graph_v,
             policy_loss=policy_loss,
-            value_loss=value_loss)
+            value_loss=value_loss,
+            advantage=advantage)
 
         return network

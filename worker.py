@@ -9,11 +9,11 @@ from network import create_network
 from train_ops import *
 from utils import *
 
+from IPython.core.debugger import Pdb
+
 G = 0.99
-N_ACTIONS = 3
-ACTIONS = np.arange(N_ACTIONS) + 1
-N_FRAMES_STACKED = 4
-N_MAX_NOOPS = 30
+N_ACTIONS = 4
+ACTIONS = np.arange(N_ACTIONS)
 
 def list_set(l, i, val):
     assert(len(l) == i)
@@ -23,7 +23,7 @@ class Worker:
 
     def __init__(self, sess, worker_n, env_name, summary_writer):
         self.sess = sess
-        self.env = EnvWrapper(gym.make(env_name), prepro2=prepro2, frameskip=4)
+        self.env = gym.make(env_name)
 
         worker_scope = "worker_%d" % worker_n
         self.network = create_network(worker_scope)
@@ -50,7 +50,6 @@ class Worker:
 
         self.init_copy_ops()
 
-        self.frame_stack = deque(maxlen=N_FRAMES_STACKED)
         self.reset_env()
 
         self.t_max = 10000
@@ -62,19 +61,7 @@ class Worker:
         self.fig = None
 
     def reset_env(self):
-        self.frame_stack.clear()
-        self.env.reset()
-
-        n_noops = np.random.randint(low=0, high=N_MAX_NOOPS+1)
-        print("%d no-ops..." % n_noops)
-        for i in range(n_noops):
-            o, _, _, _ = self.env.step(0)
-            self.frame_stack.append(o)
-        while len(self.frame_stack) < N_FRAMES_STACKED:
-            print("One more...")
-            o, _, _, _ = self.env.step(0)
-            self.frame_stack.append(o)
-        print("No-ops done")
+        self.o = self.env.reset()
 
     def log_rewards(self):
         reward_sum = sum(self.episode_rewards)
@@ -138,13 +125,11 @@ class Worker:
                   self.zero_value_gradients])
         self.sync_network()
 
-        list_set(states, i, self.frame_stack)
+        list_set(states, i, self.o)
 
         done = False
         while not done and i < self.t_max:
-            #print("Step %d" % i)
-            s = np.moveaxis(self.frame_stack, source=0, destination=-1)
-            feed_dict = {self.network.s: [s]}
+            feed_dict = {self.network.s: [[self.o]]}
             a_p = self.sess.run(self.network.a_softmax, feed_dict=feed_dict)[0]
             a = np.random.choice(ACTIONS, p=a_p)
             list_set(actions, i, a)
@@ -153,17 +138,17 @@ class Worker:
 
             if self.render:
                 self.env.render()
-                feed_dict = {self.network.s: [s]}
+                feed_dict = {self.network.s: [[o]]}
                 v = self.sess.run(self.network.graph_v, feed_dict=feed_dict)[0]
                 self.value_log.append(v)
                 self.value_graph()
 
             if r != 0:
                 print("Got reward", r)
-            self.frame_stack.append(o)
+            self.o = o
             self.episode_rewards.append(r)
             list_set(rewards, i, r)
-            list_set(states, i + 1, np.copy(self.frame_stack))
+            list_set(states, i + 1, self.o)
 
             i += 1
 
@@ -188,19 +173,25 @@ class Worker:
         # (Why start from i - 1, rather than i?
         #  So that we miss out the last state.)
         for j in reversed(range(i)):
-            s = np.moveaxis(states[j], source=0, destination=-1)
+            s = states[j]
+            s = 5
             r = rewards[j] + G * r
-            feed_dict = {self.network.s: [s],
-                         # map from possible actions (1, 2, 3) -> (0, 1, 2)
-                         self.network.a: [actions[j] - 1], 
+            r = 0
+            feed_dict = {self.network.s: [[s]],
+                         self.network.a: [actions[j]], 
                          self.network.r: [r]}
+
+            print(s)
+            print(self.sess.run([self.network.graph_v], feed_dict)[0])
+            print(self.sess.run([self.network.advantage], feed_dict)[0])
+            print()
 
             self.sess.run([self.update_policy_gradients,
                       self.update_value_gradients],
                       feed_dict)
 
-        self.sess.run([self.apply_policy_gradients,
-                       self.apply_value_gradients])
+        # Perform update of global parameters
+        self.sess.run([self.apply_value_gradients])
         self.sess.run([self.zero_policy_gradients,
                        self.zero_value_gradients])
 
