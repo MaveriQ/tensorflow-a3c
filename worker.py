@@ -33,8 +33,8 @@ class Worker:
         self.reward = tf.Variable(0.0)
         self.reward_summary = tf.summary.scalar('reward', self.reward)
 
-        policy_optimizer = tf.train.AdamOptimizer(learning_rate=0.0005)
-        value_optimizer = tf.train.AdamOptimizer(learning_rate=0.0005)
+        policy_optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
+        value_optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
 
         self.update_policy_gradients, self.apply_policy_gradients, self.zero_policy_gradients, self.grad_bufs_policy = \
             create_train_ops(self.network.policy_loss,
@@ -60,11 +60,15 @@ class Worker:
         self.value_log = deque(maxlen=100)
         self.fig = None
 
+        self.episode_n = 0
+
     def reset_env(self):
         self.o = self.env.reset()
 
     def log_rewards(self):
         reward_sum = sum(self.episode_rewards)
+        self.episode_n += 1
+        print("episode_n %d" % self.episode_n)
         print("Reward sum was", reward_sum)
         self.sess.run(tf.assign(self.reward, reward_sum))
         summ = self.sess.run(self.reward_summary)
@@ -131,7 +135,9 @@ class Worker:
         while not done and i < self.t_max:
             feed_dict = {self.network.s: [[self.o]]}
             a_p = self.sess.run(self.network.a_softmax, feed_dict=feed_dict)[0]
+            print(a_p)
             a = np.random.choice(ACTIONS, p=a_p)
+            print(a)
             list_set(actions, i, a)
 
             o, r, done, _ = self.env.step(a)
@@ -140,6 +146,7 @@ class Worker:
                 self.env.render()
                 feed_dict = {self.network.s: [[o]]}
                 v = self.sess.run(self.network.graph_v, feed_dict=feed_dict)[0]
+                print(v)
                 self.value_log.append(v)
                 self.value_graph()
 
@@ -178,13 +185,15 @@ class Worker:
             feed_dict = {self.network.s: [[s]],
                          self.network.a: [actions[j]],
                          self.network.r: [r]}
+            print(j, s, actions[j], r)
 
             self.sess.run([self.update_policy_gradients,
                       self.update_value_gradients],
                       feed_dict)
 
         # Perform update of global parameters
-        self.sess.run([self.apply_value_gradients])
+        self.sess.run([self.apply_policy_gradients,
+                       self.apply_value_gradients])
         self.sess.run([self.zero_policy_gradients,
                        self.zero_value_gradients])
 

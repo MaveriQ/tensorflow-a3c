@@ -3,7 +3,7 @@ import tensorflow as tf
 from utils import entropy
 
 N_ACTIONS = 4
-BETA = 0.0
+BETA = 0.01
 
 Network = namedtuple('Network',
                      's a r a_softmax graph_v policy_loss value_loss advantage')
@@ -17,7 +17,7 @@ def create_network(scope):
 
         x = tf.layers.dense(
                 inputs=graph_s,
-                units=100,
+                units=500,
                 activation=tf.nn.relu)
 
         a_logits = tf.layers.dense(
