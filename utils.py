@@ -96,3 +96,12 @@ def entropy(logits, dims=-1):
     probs = tf.nn.softmax(logits, dims)
     nplogp = probs * (tf.reduce_logsumexp(logits, dims, keep_dims=True) - logits)
     return tf.reduce_sum(nplogp, dims, keep_dims=True)
+
+class RunningAverage:
+    def __init__(self):
+        self.avg = 0
+        self.n = 0
+
+    def update(self, x):
+        self.n += 1
+        self.avg += 1/self.n * (x - self.avg)

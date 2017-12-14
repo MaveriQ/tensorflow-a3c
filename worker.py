@@ -62,6 +62,9 @@ class Worker:
         self.value_log = deque(maxlen=100)
         self.fig = None
 
+        self.r_mean = RunningAverage()
+        self.r_std = RunningAverage()
+
     def reset_env(self):
         self.frame_stack.clear()
         self.env.reset()
@@ -167,6 +170,12 @@ class Worker:
             list_set(states, i + 1, np.copy(self.frame_stack))
 
             i += 1
+
+        self.r_mean.update(np.mean(rewards))
+        self.r_std.update(np.std(rewards))
+        rewards -= self.r_mean.avg
+        if self.r_std.avg != 0:
+            rewards /= self.r_std.avg
 
         if done:
             print("Episode %d finished" % self.episode_n)
