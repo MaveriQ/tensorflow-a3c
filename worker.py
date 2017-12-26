@@ -65,6 +65,9 @@ class Worker:
         self.r_mean = RunningAverage()
         self.r_std = RunningAverage()
 
+        self.val_loss_var = tf.Variable(0.0)
+        self.summ_op = tf.summary.scalar('value_loss', self.val_loss_var)
+
     def reset_env(self):
         self.frame_stack.clear()
         self.env.reset()
@@ -194,6 +197,7 @@ class Worker:
             feed_dict = {self.network.s: [s]}
             r = self.sess.run(self.network.graph_v, feed_dict=feed_dict)[0]
 
+        value_loss_sum = 0
         # i - 1 to 0
         # (Why start from i - 1, rather than i?
         #  So that we miss out the last state.)
@@ -210,14 +214,21 @@ class Worker:
                          self.network.a: [actions[j] - 1],
                          self.network.r: [r2]}
 
-            self.sess.run([self.update_policy_gradients,
-                      self.update_value_gradients],
+            _, _, value_loss = self.sess.run([self.update_policy_gradients,
+                      self.update_value_gradients,
+                      self.network.value_loss],
                       feed_dict)
+            value_loss_sum += value_loss
 
         self.sess.run([self.apply_policy_gradients,
                        self.apply_value_gradients])
         self.sess.run([self.zero_policy_gradients,
                        self.zero_value_gradients])
+
+        print("Value loss was", value_loss_sum)
+        self.sess.run(self.val_loss_var.assign(value_loss_sum))
+        summ = self.sess.run(self.summ_op)
+        self.summary_writer.add_summary(summ, self.steps)
 
         self.steps += 1
 
