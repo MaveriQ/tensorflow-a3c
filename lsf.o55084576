@@ -1,0 +1,37 @@
+Sender: LSF System <lsfadmin@eu-c7-013-13>
+Subject: Job 55084576: <./run.sh --port_start 2300> in cluster <euler> Exited
+
+Job <./run.sh --port_start 2300> was submitted from host <eu-login-05> by user <mrahtz> in cluster <euler> at Tue Dec 26 11:38:36 2017.
+Job was executed on host(s) <16*eu-c7-013-13>, in queue <normal.24h>, as user <mrahtz> in cluster <euler> at Tue Dec 26 11:41:19 2017.
+</cluster/home/mrahtz> was used as the home directory.
+</cluster/home/mrahtz/tensorflow-a3c/t5_fixed_averaging> was used as the working directory.
+Started at Tue Dec 26 11:41:19 2017.
+Terminated at Tue Dec 26 17:41:45 2017.
+Results reported at Tue Dec 26 17:41:45 2017.
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+./run.sh --port_start 2300
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 140.
+
+Resource usage summary:
+
+    CPU time :                                   578143.31 sec.
+    Max Memory :                                 19954 MB
+    Average Memory :                             17560.11 MB
+    Total Requested Memory :                     22400.00 MB
+    Delta Memory :                               2446.00 MB
+    Max Swap :                                   -
+    Max Processes :                              19
+    Max Threads :                                2712
+    Run time :                                   21640 sec.
+    Turnaround time :                            21789 sec.
+
+The output (if any) follows:
+
+User defined signal 2
