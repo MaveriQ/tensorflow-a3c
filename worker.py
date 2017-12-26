@@ -175,11 +175,6 @@ class Worker:
         self.r_std.update(np.std(rewards))
         print("Reward mean:", self.r_mean.avg)
         print("Reward stddev:", self.r_std.avg)
-        print("Rewards pre-normalisation:", rewards)
-        rewards -= self.r_mean.avg
-        print("Rewards post-normalisation:", rewards)
-        if self.r_std.avg != 0:
-            rewards /= self.r_std.avg
 
         if done:
             print("Episode %d finished" % self.episode_n)
@@ -205,10 +200,15 @@ class Worker:
         for j in reversed(range(i)):
             s = np.moveaxis(states[j], source=0, destination=-1)
             r = rewards[j] + G * r
+
+            r2 = r - self.r_mean.avg
+            if self.r_std.avg != 0:
+                r2 /= self.r_std.avg
+
             feed_dict = {self.network.s: [s],
                          # map from possible actions (1, 2, 3) -> (0, 1, 2)
-                         self.network.a: [actions[j] - 1], 
-                         self.network.r: [r]}
+                         self.network.a: [actions[j] - 1],
+                         self.network.r: [r2]}
 
             self.sess.run([self.update_policy_gradients,
                       self.update_value_gradients],
