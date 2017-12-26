@@ -173,7 +173,11 @@ class Worker:
 
         self.r_mean.update(np.mean(rewards))
         self.r_std.update(np.std(rewards))
+        print("Reward mean:", self.r_mean.avg)
+        print("Reward stddev:", self.r_std.avg)
+        print("Rewards pre-normalisation:", rewards)
         rewards -= self.r_mean.avg
+        print("Rewards post-normalisation:", rewards)
         if self.r_std.avg != 0:
             rewards /= self.r_std.avg
 
