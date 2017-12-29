@@ -161,14 +161,16 @@ class Worker:
                 self.value_log.append(v)
                 self.value_graph()
 
-            if r != 0:
-                print("Got reward", r)
             self.frame_stack.append(o)
             self.episode_rewards.append(r)
             list_set(rewards, i, r)
             list_set(states, i + 1, np.copy(self.frame_stack))
 
             i += 1
+
+            if r != 0:
+                print("Got reward", r)
+                break
 
         if done:
             print("Episode %d finished" % self.episode_n)
@@ -177,7 +179,7 @@ class Worker:
             self.episode_n += 1
 
         # Calculate initial value for R
-        if done:
+        if done or r != 0:
             # Terminal state
             r = 0
         else:
@@ -198,6 +200,7 @@ class Worker:
             s = np.moveaxis(states[j], source=0, destination=-1)
             a = actions[j] - 1
             r = rewards[j] + G * r
+            print(r)
 
             s_batch.append(s)
             a_batch.append(a)
