@@ -1,0 +1,37 @@
+Sender: LSF System <lsfadmin@eu-c7-011-01>
+Subject: Job 55167137: <./run.sh> in cluster <euler> Exited
+
+Job <./run.sh> was submitted from host <eu-login-10> by user <mrahtz> in cluster <euler> at Fri Dec 29 15:35:14 2017.
+Job was executed on host(s) <16*eu-c7-011-01>, in queue <normal.24h>, as user <mrahtz> in cluster <euler> at Sat Dec 30 16:00:32 2017.
+</cluster/home/mrahtz> was used as the home directory.
+</cluster/home/mrahtz/tensorflow-a3c/t5> was used as the working directory.
+Started at Sat Dec 30 16:00:32 2017.
+Terminated at Sun Dec 31 04:00:54 2017.
+Results reported at Sun Dec 31 04:00:54 2017.
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+./run.sh
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with exit code 134.
+
+Resource usage summary:
+
+    CPU time :                                   173787.70 sec.
+    Max Memory :                                 18516 MB
+    Average Memory :                             16140.51 MB
+    Total Requested Memory :                     22400.00 MB
+    Delta Memory :                               3884.00 MB
+    Max Swap :                                   -
+    Max Processes :                              19
+    Max Threads :                                2531
+    Run time :                                   43250 sec.
+    Turnaround time :                            131140 sec.
+
+The output (if any) follows:
+
+./run.sh: line 6: 56185 Aborted                 (core dumped) python -u ./run.py 16 0 $* &>0.log
